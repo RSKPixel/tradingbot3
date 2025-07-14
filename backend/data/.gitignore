@@ -1,2 +1,6 @@
 nse/
 nfo/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
