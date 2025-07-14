@@ -10,13 +10,13 @@ def check_signals() -> dict:
 
     files = [f for f in os.listdir(csv_dir) if f.endswith('.csv')]
     if not files:
-        print("No CSV files found")
+        # print("No CSV files found")
         return {"message": "No CSV files found in nse/15m directory.", "status": "error", "data": []}
     
     # Example usage
     completed_signals = []
     for file in files:
-        print(f"Processing {file}...               \r", end="\r")
+        # print(f"Processing {file}...               \r", end="\r")
         signals = pivot_strategy(file, csv_dir)
         if signals is not None:
             completed_signals.append(signals)
@@ -25,8 +25,9 @@ def check_signals() -> dict:
         all_signals = pd.concat(completed_signals, ignore_index=True)
         export_dir = os.path.join(BASE_DIR, "all_signals.csv")
         all_signals.to_csv(export_dir, index=False)
-        print("✅ all_signals.csv generated with combined signals.")
         return {"message": "Signals processed successfully.", "status": "success", "signals": all_signals.to_dict(orient='records')}
+    else:
+        return {"message": "No signals generated.", "status": "error", "data": []}
 
     
 

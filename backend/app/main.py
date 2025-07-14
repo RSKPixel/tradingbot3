@@ -21,7 +21,7 @@ async def root():
 async def intraday_pivot_calls():
 
     data = check_signals()
-    print(data)
+    # print(data)
     signals = pd.DataFrame(data["signals"])
 
     print(signals.tail())
