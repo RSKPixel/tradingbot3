@@ -6,7 +6,7 @@ import os
 def check_signals() -> dict:
     # get all files in the nse/15m directory
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    csv_dir = os.path.join(BASE_DIR, "..", "data", "nfo", "15m")
+    csv_dir = os.path.join(BASE_DIR, "nfo", "15m")
     csv_dir = os.path.abspath(csv_dir)  # Normalize path
 
     files = [f for f in os.listdir(csv_dir) if f.endswith('.csv')]
@@ -35,6 +35,7 @@ def check_signals() -> dict:
 
 def pivot_strategy(file, csv_dir) -> pd.DataFrame:
     # === Load your 15-minute data ===
+    print(f"Processing {file}...               \r", end="\r")
     df = pd.read_csv(os.path.join(csv_dir, file), parse_dates=["date"])
     df.set_index("date", inplace=True)
 
@@ -51,23 +52,23 @@ def pivot_strategy(file, csv_dir) -> pd.DataFrame:
     df["TL4"] = df["TL3"].ewm(span=20, adjust=False).mean()
 
     # Short and Long Trend
-    df["ShortTrend"] = np.where(df["TL1"] > df["TL2"], "Uptrend", "Downtrend")
-    df["LongTrend"] = np.where(df["TL3"] > df["TL4"], "Uptrend", "Downtrend")
+    # df["ShortTrend"] = np.where(df["TL1"] > df["TL2"], "Uptrend", "Downtrend")
+    # df["LongTrend"] = np.where(df["TL3"] > df["TL4"], "Uptrend", "Downtrend")
 
     # === Indicators ===
-    df["EMA20"] = df["close"].ewm(span=20, adjust=False).mean()
-    df["EMA40"] = df["close"].ewm(span=40, adjust=False).mean()
+    # df["EMA20"] = df["close"].ewm(span=20, adjust=False).mean()
+    # df["EMA40"] = df["close"].ewm(span=40, adjust=False).mean()
     df["ATR"] = (df["high"] - df["low"]).rolling(window=10).mean()
 
     # === Donchian Channels (shifted 1 bar like AFL) ===
-    df["DonchianUpper"] = df["high"].shift(1).rolling(window=20).max()
-    df["DonchianLower"] = df["low"].shift(1).rolling(window=20).min()
+    # df["DonchianUpper"] = df["high"].shift(1).rolling(window=20).max()
+    # df["DonchianLower"] = df["low"].shift(1).rolling(window=20).min()
 
     # === Trend Filters (for future use)
-    df["UpTrend"] = (df["close"] > (df["low"].rolling(
-        20).min() + 2 * df["ATR"])) & (df["EMA20"] > df["EMA40"])
-    df["DnTrend"] = (df["close"] < (df["high"].rolling(
-        20).max() - 2 * df["ATR"])) & (df["EMA20"] < df["EMA40"])
+    # df["UpTrend"] = (df["close"] > (df["low"].rolling(
+    #     20).min() + 2 * df["ATR"])) & (df["EMA20"] > df["EMA40"])
+    # df["DnTrend"] = (df["close"] < (df["high"].rolling(
+    #     20).max() - 2 * df["ATR"])) & (df["EMA20"] < df["EMA40"])
 
     # === Pivot Detection (N-bar High/Low pivots) ===
     n = 5
@@ -78,7 +79,10 @@ def pivot_strategy(file, csv_dir) -> pd.DataFrame:
     df["pivot_low"] = df["low"][(df["low"].shift(1) > df["low"]) &
                                 (df["low"].shift(-1) > df["low"]) &
                                 (df["low"] == df["low"].rolling(2 * n + 1, center=True).min())]
+    df["symbol"] = file.split('.')[0]
 
+    if file.split('.')[0] == 'COALINDIA-I':
+        df.to_clipboard()
     # === Generate Buy/Sell Signals ===
     df["Buy"] = df["pivot_low"].notna()
     df["Sell"] = df["pivot_high"].notna()
@@ -109,8 +113,8 @@ def pivot_strategy(file, csv_dir) -> pd.DataFrame:
     # === Filter final signals ===
     signals = df[df["Signal"] != ""].copy()
     signals = signals.round(2)
-    signals["ShortTrend"] = df["ShortTrend"]
-    signals["LongTrend"] = df["LongTrend"]
+    # signals["ShortTrend"] = df["ShortTrend"]
+    # signals["LongTrend"] = df["LongTrend"]
     signals['symbol'] = file.split('.')[0]
     signals = signals.reset_index()
 
@@ -119,3 +123,10 @@ def pivot_strategy(file, csv_dir) -> pd.DataFrame:
 
     # === Export ===
     return signals
+
+
+if __name__ == "__main__":
+    data = check_signals()
+    signals = pd.DataFrame(data["signals"])
+
+    # print(signals.tail())
