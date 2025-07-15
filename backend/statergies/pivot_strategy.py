@@ -24,8 +24,9 @@ def check_signals() -> dict:
 
     if completed_signals:
         all_signals = pd.concat(completed_signals, ignore_index=True)
-        all_signals = all_signals[all_signals['date']
-                                  == all_signals['date'].max()]
+        all_signals = all_signals[all_signals['date'].dt.date
+                                  == all_signals['date'].dt.date.max()]
+        all_signals = all_signals.sort_values(by=['Signal'])
         export_dir = os.path.join(BASE_DIR, "all_signals.csv")
         all_signals.to_csv(export_dir, index=False)
         return {"message": "Signals processed successfully.", "status": "success", "signals": all_signals.to_dict(orient='records')}
