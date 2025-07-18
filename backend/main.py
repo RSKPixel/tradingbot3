@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from statergies.pivot_strategy import check_signals
+from statergies.pivot_strategy2 import check_signals
+# from statergies.pivot_strategy import check_signals
+
 import pandas as pd
 
 app = FastAPI()

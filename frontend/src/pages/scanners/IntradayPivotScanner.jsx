@@ -20,6 +20,7 @@ const IntradayPivotScanner = () => {
         })
             .then(response => response.json())
             .then(data => {
+                console.log(data);
                 setSignals(data.signals);
                 setLoading(false);
             })
