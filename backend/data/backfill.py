@@ -18,7 +18,7 @@ def main():
     while True:
         try:
             instruments(kite)
-            backfill(kite, exchange="nse", period=7, interval="15minute", silent=True)
+            # backfill(kite, exchange="nse", period=7, interval="15minute", silent=True)
             backfill(kite, exchange="nfo", period=7, interval="15minute", silent=True)
             wait_until_next_15min()
         except Exception as e:
@@ -41,9 +41,12 @@ def backfill(kite, exchange='nse', period=90, interval="15minute", silent=False)
     current_expiry = expiry_dates[expiry_dates["expiry"] >= pd.to_datetime(datetime.now().date())].iloc[0]["expiry"]
     previous_expiry = expiry_dates[expiry_dates["expiry"] < pd.to_datetime(datetime.now().date())].iloc[-1]["expiry"]
 
-    print(f"Current expiry: {current_expiry}, Previous expiry: {previous_expiry}")
+    if exchange == 'nfo':
+        print(f"Current expiry: {current_expiry}, Previous expiry: {previous_expiry}")
 
     print(f"Starting backfill for {len(instrument_list)} instruments...")
+    req_start = time.time()
+    request_count = 0
     for index, instrument in instrument_list.iterrows():
         try:
             from_date = datetime.now().date() - timedelta(days=period if period != 1 else 0)
@@ -58,6 +61,7 @@ def backfill(kite, exchange='nse', period=90, interval="15minute", silent=False)
                 to_date=to_date,
                 interval=interval,
             )
+            request_count += 1
 
             if exchange == 'nse':
                 file_path = f"nse/15m/{instrument['tradingsymbol']}.csv"
@@ -91,9 +95,13 @@ def backfill(kite, exchange='nse', period=90, interval="15minute", silent=False)
             if not silent:
                 print(
                     f"Data for {instrument['tradingsymbol']} downloaded successfully. {from_date} to {to_date}")
+
         except Exception as e:
             print(
                 f"Error downloading data for {instrument['tradingsymbol']}: {e}")
+
+    req_end = time.time()
+    print(f"[{request_count}] Request time: {req_end - req_start:.2f}s Rate: {request_count / (req_end - req_start):.2f} req/s")
 
     endtime = datetime.now()
     print("Backfill completed. Total time taken: ",

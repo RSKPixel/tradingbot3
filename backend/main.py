@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from statergies.pivot_strategy2 import check_signals
-# from statergies.pivot_strategy import check_signals
+from statergies.emarsi import check_signals as check_signals_rgb
 
 import pandas as pd
 
@@ -27,4 +27,11 @@ async def intraday_pivot_calls():
     data = check_signals()
     signals = pd.DataFrame(data["signals"])
 
+    return {"message": data["message"], "signals": signals.to_dict(orient='records'), "status": data["status"]}
+
+@app.get('/intraday-emarsi-signals')
+async def intraday_rgb():
+    data = check_signals_rgb()
+
+    signals = pd.DataFrame(data["signals"])
     return {"message": data["message"], "signals": signals.to_dict(orient='records'), "status": data["status"]}
